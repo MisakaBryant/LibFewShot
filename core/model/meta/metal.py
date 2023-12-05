@@ -11,6 +11,25 @@ from core.utils import accuracy
 class METAL(MetaModel):
     def __init__(self, inner_param, feat_dim, **kwargs):
         super(METAL, self).__init__(**kwargs)
+        # TODO feat_dim 的值有问题
+        """
+        names_weights_copy = self.get_inner_loop_parameter_dict(self.classifier.named_parameters())
+
+        base_learner_num_layers = len(names_weights_copy)
+
+        support_meta_loss_num_dim = base_learner_num_layers + 2 * self.args.num_classes_per_set + 1
+        support_adapter_num_dim = base_learner_num_layers + 1
+        query_num_dim = base_learner_num_layers + 1 + self.args.num_classes_per_set
+
+        self.meta_loss = MetaLossNetwork(support_meta_loss_num_dim, args=args, device=device).to(device=self.device)
+        self.meta_query_loss = MetaLossNetwork(query_num_dim, args=args, device=device).to(device=self.device)
+
+        self.meta_loss_adapter = LossAdapter(support_adapter_num_dim, num_loss_net_layers=2, args=args,
+                                             device=device).to(device=self.device)
+        self.meta_query_loss_adapter = LossAdapter(query_num_dim, num_loss_net_layers=2, args=args, device=device).to(
+            device=self.device)
+        """
+
         self.feat_dim = feat_dim
         self.loss_func = MetaLossNetwork(feat_dim, inner_param)
         self.query_loss_func = MetaLossNetwork(feat_dim, inner_param)
@@ -40,12 +59,23 @@ class METAL(MetaModel):
 
         output_list = []
         for i in range(episode_size):
+            """
+            源代码：
+            x_support_set_task = x_support_set_task.view(-1, c, h, w)
+            x_target_set_task = x_target_set_task.view(-1, c, h, w)
+        
+            y_support_set_task = y_support_set_task.view(-1) 
+            y_target_set_task = y_target_set_task.view(-1)
+            """
+            # 都是x
             episode_support_image = support_image[i].contiguous().reshape(-1, c, h, w)
             episode_query_image = query_image[i].contiguous().reshape(-1, c, h, w)
-            episode_support_target = support_target[i].reshape(-1)
-            episode_query_target = query_target[i].reshape(-1)
-            self.set_forward_adaptation(episode_support_image, episode_query_image, episode_support_target,
-                                        episode_query_target)
+            # 都是y
+            episode_support_targets = support_target[i].reshape(-1)
+            episode_query_targets = query_target[i].reshape(-1)
+
+            self.set_forward_adaptation(episode_support_image, episode_query_image, episode_support_targets,
+                                        episode_query_targets)
 
             output = self.forward_output(episode_query_image)
 
@@ -68,11 +98,14 @@ class METAL(MetaModel):
 
         output_list = []
         for i in range(episode_size):
+            # 都是x
             episode_support_image = support_image[i].contiguous().reshape(-1, c, h, w)
             episode_query_image = query_image[i].contiguous().reshape(-1, c, h, w)
-            episode_support_target = support_target[i].reshape(-1)
+            # 都是y
+            episode_support_targets = support_target[i].reshape(-1)
             episode_query_targets = query_target[i].reshape(-1)
-            self.set_forward_adaptation(episode_support_image, episode_query_image, episode_support_target, episode_query_targets)
+            self.set_forward_adaptation(episode_support_image, episode_query_image, episode_support_targets,
+                                        episode_query_targets)
 
             output = self.forward_output(episode_query_image)
 
@@ -98,9 +131,17 @@ class METAL(MetaModel):
         ):  # num_step = i
             # adapt loss weights
             # support_set--x, query_set--x_t, support_target--y, query_target--y_t
-            tmp_preds = self.classifier.forward(x=torch.cat((support_set, query_set), 0))
-            support_preds = tmp_preds[:-support_target.size(0)]
-            query_preds = tmp_preds[-support_target.size(0):]
+            """
+             # 都是x
+            episode_support_image = support_image[i].contiguous().reshape(-1, c, h, w)
+            episode_query_image = query_image[i].contiguous().reshape(-1, c, h, w)
+            # 都是y
+            episode_support_targets = support_target[i].reshape(-1)
+            episode_query_targets = query_target[i].reshape(-1)
+            """
+            tmp_preds = self.forward_output(x=torch.cat((support_set, query_set), 0))
+            support_preds = tmp_preds[:-query_set.size(0)]
+            query_preds = tmp_preds[-query_set.size(0):]
             weights = dict(self.classifier.named_parameters())  # name_param of classifier
             meta_loss_weights = dict(self.loss_func.named_parameters())  # name_param of loss_func
             meta_query_loss_weights = dict(self.query_loss_func.named_parameters())  # name_param of loss_query_func
