@@ -8,7 +8,6 @@ import torch
 from core.config import Config
 from core import Test
 
-
 PATH = "./results/DN4-miniImageNet--ravi-Conv64F-5-1-Dec-01-2021-06-05-20"
 VAR_DICT = {
     "test_epoch": 5,
