@@ -8,7 +8,6 @@ includes:
 way_num: 5
 shot_num: 1
 query_num: 15
-
 episode_size: 2
 train_episode: 2000
 test_episode: 600
@@ -20,40 +19,40 @@ epoch: 100
 optimizer:
   name: Adam
   kwargs:
-    lr: 0.001
+    lr: 1e-3
   other: ~
 
-backbone:
-  name: Conv64F
-  kwargs:
-    is_flatten: True
-    is_feature: False
-    leaky_relu: False
-    negative_slope: 0.2
-    last_pool: True
-
-classifier:
-  name: METAL
-  kwargs:
-    inner_param:
-      lr: 1e-2
-      train_iter: 5
-      test_iter: 10
-    feat_dim: 1600
-
-
 #backbone:
-#   name: resnet12
-#   kwargs: ~
+#  name: Conv64F
+#  kwargs:
+#    is_flatten: True
+#    is_feature: False
+#    leaky_relu: False
+#    negative_slope: 0.2
+#    last_pool: True
 #
 #classifier:
-#   name: METAL
-#   kwargs:
-#      inner_param:
-#        lr: 1e-2
-#        train_iter: 5
-#        test_iter: 10 #must same as train_iter
-#      feat_dim: 640
+#  name: METAL
+#  kwargs:
+#    inner_param:
+#      lr: 1e-2
+#      train_iter: 5
+#      test_iter: 10
+#    feat_dim: 1600
+
+
+backbone:
+   name: resnet12
+   kwargs: ~
+
+classifier:
+   name: METAL
+   kwargs:
+      inner_param:
+        lr: 1e-2
+        train_iter: 5
+        test_iter: 10
+      feat_dim: 640
 
 
 # backbone:
@@ -66,7 +65,7 @@ classifier:
 #     inner_param:
 #       lr: 1e-2
 #       train_iter: 5
-#       test_iter: 10 #must same as train_iter
+#       test_iter: 10
 #     feat_dim: 512
 
 
